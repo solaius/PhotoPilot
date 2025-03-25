@@ -6,7 +6,7 @@ const useMockData = process.env.REACT_APP_USE_MOCK_DATA === 'true';
 
 // Create an axios instance
 const api = axios.create({
-  baseURL: process.env.REACT_APP_API_URL || 'http://localhost:5000/api',
+  baseURL: process.env.REACT_APP_API_URL || 'http://localhost:53585/api',
   headers: {
     'Content-Type': 'application/json',
   },

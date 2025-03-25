@@ -1,6 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import axios from 'axios';
+import { mockAPI } from '../services/mockData';
+
+// For debugging
+console.log('Dashboard component loaded');
 
 const Dashboard = () => {
   const [projects, setProjects] = useState([]);
@@ -16,18 +20,43 @@ const Dashboard = () => {
   const userInfo = JSON.parse(localStorage.getItem('userInfo'));
 
   useEffect(() => {
+    console.log('Dashboard useEffect running');
+    console.log('userInfo:', userInfo);
+    
     const fetchProjects = async () => {
       try {
+        // Check if we're in development mode with mock data
+        const isDevelopment = process.env.NODE_ENV === 'development';
+        const useMockData = process.env.REACT_APP_USE_MOCK_DATA === 'true';
+        
+        if (isDevelopment && useMockData) {
+          console.log('⚠️ Using mock data for projects');
+          const data = await mockAPI.getProjects();
+          console.log('Mock projects data:', data);
+          setProjects(data);
+          setLoading(false);
+          return;
+        }
+        
+        console.log('Fetching projects from API...');
         const config = {
           headers: {
             Authorization: `Bearer ${userInfo.token}`
           }
         };
-
-        const { data } = await axios.get('/api/projects', config);
+        
+        console.log('API URL:', process.env.REACT_APP_API_URL || 'http://localhost:53585/api');
+        
+        // Use the full URL for debugging
+        const url = `${process.env.REACT_APP_API_URL || 'http://localhost:53585/api'}/projects`;
+        console.log('Fetching from URL:', url);
+        
+        const { data } = await axios.get(url, config);
+        console.log('Projects data received:', data);
         setProjects(data);
         setLoading(false);
       } catch (error) {
+        console.error('Error fetching projects:', error);
         setError(
           error.response && error.response.data.message
             ? error.response.data.message
@@ -38,7 +67,7 @@ const Dashboard = () => {
     };
 
     fetchProjects();
-  }, [userInfo.token]);
+  }, [userInfo?.token]);
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;

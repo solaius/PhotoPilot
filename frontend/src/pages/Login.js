@@ -25,12 +25,35 @@ const Login = () => {
     e.preventDefault();
     setError('');
 
+    // Check if we're in development mode with auth bypass
+    const isDevelopment = process.env.NODE_ENV === 'development';
+    const bypassAuth = process.env.REACT_APP_BYPASS_AUTH === 'true';
+    
+    if (isDevelopment && bypassAuth) {
+      console.log('⚠️ Authentication bypassed in development mode');
+      // Create a mock user
+      const mockUser = {
+        _id: '60d0fe4f5311236168a109ca',
+        name: 'Development User',
+        email: 'dev@example.com',
+        token: 'mock_token_for_development'
+      };
+      localStorage.setItem('userInfo', JSON.stringify(mockUser));
+      navigate('/dashboard');
+      return;
+    }
+
     try {
       setLoading(true);
-      const { data } = await axios.post('/api/auth/login', { email, password });
+      // Use the full URL for the API call
+      const apiUrl = `${process.env.REACT_APP_API_URL || 'http://localhost:53585/api'}/auth/login`;
+      console.log('Login API URL:', apiUrl);
+      
+      const { data } = await axios.post(apiUrl, { email, password });
       localStorage.setItem('userInfo', JSON.stringify(data));
       navigate('/dashboard');
     } catch (error) {
+      console.error('Login error:', error);
       setError(
         error.response && error.response.data.message
           ? error.response.data.message
