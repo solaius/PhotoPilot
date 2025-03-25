@@ -31,15 +31,27 @@ PhotoPilot is a modern, AI-assisted workflow platform for photographers. It stre
 - **Social APIs:** Instagram Graph API, Twitter API v2, Facebook Graph API
 - **Deployment:** Heroku (initial), with alternatives such as Fly.io, Railway
 
-## Getting Started
+## Documentation
+
+### Getting Started
+
+- [Prerequisites Overview](docs/prerequisites.md)
+  - [Node.js Installation Guide](docs/prerequisites/nodejs.md)
+  - [MongoDB Installation Guide](docs/prerequisites/mongodb.md)
+  - [Redis Installation Guide](docs/prerequisites/redis.md)
+- [Getting Started Guide](docs/getting-started.md)
+- [API Documentation](docs/API.md)
+- [Development Plan](docs/DEVELOPMENT_PLAN.md)
 
 ### Prerequisites
 
-- Node.js (v14 or higher)
-- MongoDB (local or Atlas)
-- Redis (for real-time features)
+Before you begin, make sure you have installed:
 
-### Installation
+- **Node.js** (v14 or higher) - [Installation Guide](docs/prerequisites/nodejs.md)
+- **MongoDB** (local or Atlas) - [Installation Guide](docs/prerequisites/mongodb.md)
+- **Redis** (for real-time features) - [Installation Guide](docs/prerequisites/redis.md)
+
+### Quick Installation
 
 1. Clone the repository:
    ```bash
@@ -47,35 +59,17 @@ PhotoPilot is a modern, AI-assisted workflow platform for photographers. It stre
    cd PhotoPilot
    ```
 
-2. Install backend dependencies:
+2. Run the development setup script:
    ```bash
-   cd backend
-   npm install
+   chmod +x start-dev.sh
+   ./start-dev.sh
    ```
 
-3. Install frontend dependencies:
-   ```bash
-   cd ../frontend
-   npm install
-   ```
+   This will install dependencies and start both the backend and frontend servers.
 
-4. Set up environment variables:
-   - Create a `.env` file in the backend directory based on the provided `.env.example`
-   - Add your MongoDB URI, JWT secret, and OAuth credentials
+3. Open your browser and navigate to `http://localhost:59638`
 
-5. Start the development servers:
-   - Backend:
-     ```bash
-     cd backend
-     npm run dev
-     ```
-   - Frontend:
-     ```bash
-     cd frontend
-     npm start
-     ```
-
-6. Open your browser and navigate to `http://localhost:3000`
+For detailed installation instructions, see the [Getting Started Guide](docs/getting-started.md).
 
 ## Project Structure
 
@@ -107,6 +101,15 @@ PhotoPilot is a modern, AI-assisted workflow platform for photographers. It stre
   /docs               # Documentation
   /.github            # GitHub Actions for CI/CD
 ```
+
+## Development Mode Features
+
+For easier development, PhotoPilot includes:
+
+- **Authentication Bypass:** Set `BYPASS_AUTH=true` in backend `.env` and `REACT_APP_BYPASS_AUTH=true` in frontend `.env`
+- **Mock Database:** Set `MOCK_DB=true` in backend `.env` and `REACT_APP_USE_MOCK_DATA=true` in frontend `.env`
+
+These features allow you to run the application without setting up OAuth providers or a database.
 
 ## Contributing
 
