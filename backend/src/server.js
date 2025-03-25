@@ -29,9 +29,22 @@ const connectDB = async () => {
     // In production, this would be MongoDB Atlas
     const conn = await mongoose.connect(process.env.MONGO_URI || 'mongodb://localhost:27017/photopilot');
     console.log(`MongoDB Connected: ${conn.connection.host}`);
+    return true;
   } catch (error) {
-    console.error(`Error: ${error.message}`);
-    process.exit(1);
+    console.error(`MongoDB Connection Error: ${error.message}`);
+    
+    // In development mode, we can continue without a database
+    if (process.env.NODE_ENV === 'development' && process.env.MOCK_DB === 'true') {
+      console.log('⚠️ Running with mock database in development mode');
+      return false;
+    }
+    
+    // In production, exit the process
+    if (process.env.NODE_ENV === 'production') {
+      process.exit(1);
+    }
+    
+    return false;
   }
 };
 

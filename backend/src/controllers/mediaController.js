@@ -1,12 +1,44 @@
 const MediaAsset = require('../models/MediaAsset');
 const Project = require('../models/Project');
 
+// Import mock data for development
+const mockData = require('../utils/mockData');
+
 // @desc    Get all media assets for a project
 // @route   GET /api/media/project/:projectId
 // @access  Private
 exports.getMediaAssets = async (req, res) => {
   try {
     const { projectId } = req.params;
+
+    // Check if we're using mock data
+    if (process.env.NODE_ENV === 'development' && process.env.MOCK_DB === 'true') {
+      // Get project from mock data
+      const project = mockData.findById(mockData.projects, projectId);
+      
+      if (!project) {
+        return res.status(404).json({ message: 'Project not found' });
+      }
+      
+      // In development mode with auth bypass, we skip the authorization check
+      if (!(process.env.BYPASS_AUTH === 'true')) {
+        // Check if user is owner or collaborator
+        const isOwner = project.owner === req.user.id;
+        const isCollaborator = project.collaborators.some(
+          (collab) => collab.userId === req.user.id
+        );
+
+        if (!isOwner && !isCollaborator) {
+          return res.status(403).json({ message: 'Not authorized to access this project' });
+        }
+      }
+      
+      // Get all media assets for the project from mock data
+      const mediaAssets = mockData.find(mockData.mediaAssets, { projectId })
+        .sort((a, b) => a.orderIndex - b.orderIndex);
+      
+      return res.json(mediaAssets);
+    }
 
     // Check if project exists and user has access
     const project = await Project.findById(projectId);

@@ -1,5 +1,9 @@
 import axios from 'axios';
 
+// Check if we're in development mode with mock data
+const isDevelopment = process.env.NODE_ENV === 'development';
+const useMockData = process.env.REACT_APP_USE_MOCK_DATA === 'true';
+
 // Create an axios instance
 const api = axios.create({
   baseURL: process.env.REACT_APP_API_URL || 'http://localhost:5000/api',
@@ -11,11 +15,18 @@ const api = axios.create({
 // Add a request interceptor to add the auth token to requests
 api.interceptors.request.use(
   (config) => {
+    // Always add the token if available
     const userInfo = localStorage.getItem('userInfo');
     if (userInfo) {
       const { token } = JSON.parse(userInfo);
       config.headers.Authorization = `Bearer ${token}`;
     }
+    
+    // In development mode with mock data, we can log the request
+    if (isDevelopment) {
+      console.log(`API Request: ${config.method.toUpperCase()} ${config.url}`);
+    }
+    
     return config;
   },
   (error) => {

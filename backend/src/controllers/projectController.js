@@ -1,6 +1,9 @@
 const Project = require('../models/Project');
 const MediaAsset = require('../models/MediaAsset');
 
+// Import mock data for development
+const mockData = require('../utils/mockData');
+
 // @desc    Create a new project
 // @route   POST /api/projects
 // @access  Private
@@ -29,6 +32,32 @@ exports.createProject = async (req, res) => {
 // @access  Private
 exports.getProjects = async (req, res) => {
   try {
+    // Check if we're using mock data
+    if (process.env.NODE_ENV === 'development' && process.env.MOCK_DB === 'true') {
+      // Get projects from mock data
+      const projects = mockData.find(mockData.projects, {
+        $or: [
+          { owner: req.user.id },
+          { 'collaborators.userId': req.user.id }
+        ]
+      });
+      
+      // Add owner details to each project
+      const projectsWithOwner = projects.map(project => {
+        const owner = mockData.findById(mockData.users, project.owner);
+        return {
+          ...project,
+          owner: {
+            _id: owner._id,
+            name: owner.name,
+            email: owner.email
+          }
+        };
+      });
+      
+      return res.json(projectsWithOwner);
+    }
+
     // Find projects where user is owner or collaborator
     const projects = await Project.find({
       $or: [
@@ -49,6 +78,52 @@ exports.getProjects = async (req, res) => {
 // @access  Private
 exports.getProjectById = async (req, res) => {
   try {
+    // Check if we're using mock data
+    if (process.env.NODE_ENV === 'development' && process.env.MOCK_DB === 'true') {
+      const project = mockData.findById(mockData.projects, req.params.id);
+      
+      if (!project) {
+        return res.status(404).json({ message: 'Project not found' });
+      }
+      
+      // Add owner details
+      const owner = mockData.findById(mockData.users, project.owner);
+      const projectWithDetails = {
+        ...project,
+        owner: {
+          _id: owner._id,
+          name: owner.name,
+          email: owner.email
+        },
+        collaborators: project.collaborators.map(collab => {
+          const user = mockData.findById(mockData.users, collab.userId);
+          return {
+            ...collab,
+            userId: {
+              _id: user ? user._id : collab.userId,
+              name: user ? user.name : 'Unknown User',
+              email: user ? user.email : 'unknown@example.com'
+            }
+          };
+        })
+      };
+      
+      // In development mode with auth bypass, we skip the authorization check
+      if (!(process.env.BYPASS_AUTH === 'true')) {
+        // Check if user is owner or collaborator
+        const isOwner = projectWithDetails.owner._id === req.user.id;
+        const isCollaborator = projectWithDetails.collaborators.some(
+          (collab) => collab.userId._id === req.user.id
+        );
+
+        if (!isOwner && !isCollaborator) {
+          return res.status(403).json({ message: 'Not authorized to access this project' });
+        }
+      }
+      
+      return res.json(projectWithDetails);
+    }
+
     const project = await Project.findById(req.params.id)
       .populate('owner', 'name email')
       .populate('collaborators.userId', 'name email');
