@@ -1,6 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import axios from 'axios';
+import { mockAPI } from '../services/mockData';
+
+// For debugging
+console.log('ProjectDetails component loaded');
 
 const ProjectDetails = () => {
   const { id } = useParams();
@@ -16,22 +20,58 @@ const ProjectDetails = () => {
   const userInfo = JSON.parse(localStorage.getItem('userInfo'));
 
   useEffect(() => {
+    console.log('ProjectDetails useEffect running');
+    console.log('Project ID:', id);
+    console.log('userInfo:', userInfo);
+    
     const fetchProjectDetails = async () => {
       try {
+        // Check if we're in development mode with mock data
+        const isDevelopment = process.env.NODE_ENV === 'development';
+        const useMockData = process.env.REACT_APP_USE_MOCK_DATA === 'true';
+        
+        if (isDevelopment && useMockData) {
+          console.log('⚠️ Using mock data for project details');
+          
+          // Get project data
+          const projectData = await mockAPI.getProjectById(id);
+          console.log('Mock project data:', projectData);
+          setProject(projectData);
+          
+          // Get media assets
+          const mediaData = await mockAPI.getMediaAssets(id);
+          console.log('Mock media assets:', mediaData);
+          setMediaAssets(mediaData);
+          
+          setLoading(false);
+          return;
+        }
+        
+        console.log('Fetching project details from API...');
         const config = {
           headers: {
             Authorization: `Bearer ${userInfo.token}`
           }
         };
 
-        const { data: projectData } = await axios.get(`/api/projects/${id}`, config);
+        // Use the full URL for debugging
+        const projectUrl = `${process.env.REACT_APP_API_URL || 'http://localhost:53585/api'}/projects/${id}`;
+        console.log('Fetching project from URL:', projectUrl);
+        
+        const { data: projectData } = await axios.get(projectUrl, config);
+        console.log('Project data received:', projectData);
         setProject(projectData);
 
-        const { data: mediaData } = await axios.get(`/api/media/project/${id}`, config);
+        const mediaUrl = `${process.env.REACT_APP_API_URL || 'http://localhost:53585/api'}/media/project/${id}`;
+        console.log('Fetching media from URL:', mediaUrl);
+        
+        const { data: mediaData } = await axios.get(mediaUrl, config);
+        console.log('Media data received:', mediaData);
         setMediaAssets(mediaData);
 
         setLoading(false);
       } catch (error) {
+        console.error('Error fetching project details:', error);
         setError(
           error.response && error.response.data.message
             ? error.response.data.message
@@ -42,10 +82,27 @@ const ProjectDetails = () => {
     };
 
     fetchProjectDetails();
-  }, [id, userInfo.token]);
+  }, [id, userInfo?.token]);
 
   const handleStatusChange = async (mediaId, newStatus) => {
     try {
+      // Check if we're in development mode with mock data
+      const isDevelopment = process.env.NODE_ENV === 'development';
+      const useMockData = process.env.REACT_APP_USE_MOCK_DATA === 'true';
+      
+      if (isDevelopment && useMockData) {
+        console.log('⚠️ Using mock data for status update');
+        await mockAPI.updateMediaStatus(mediaId, newStatus);
+        
+        // Update local state
+        setMediaAssets(
+          mediaAssets.map((media) =>
+            media._id === mediaId ? { ...media, status: newStatus } : media
+          )
+        );
+        return;
+      }
+      
       const config = {
         headers: {
           'Content-Type': 'application/json',
@@ -53,7 +110,10 @@ const ProjectDetails = () => {
         }
       };
 
-      await axios.put(`/api/media/${mediaId}/status`, { status: newStatus }, config);
+      const url = `${process.env.REACT_APP_API_URL || 'http://localhost:53585/api'}/media/${mediaId}/status`;
+      console.log('Updating status at URL:', url);
+      
+      await axios.put(url, { status: newStatus }, config);
 
       // Update local state
       setMediaAssets(
@@ -62,6 +122,7 @@ const ProjectDetails = () => {
         )
       );
     } catch (error) {
+      console.error('Error updating media status:', error);
       setError(
         error.response && error.response.data.message
           ? error.response.data.message

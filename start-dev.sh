@@ -4,7 +4,7 @@
 echo "Starting backend server..."
 cd backend
 npm install
-npm run dev &
+PORT=53585 npm run dev &
 BACKEND_PID=$!
 
 # Wait for backend to start
@@ -15,7 +15,7 @@ sleep 5
 echo "Starting frontend server..."
 cd ../frontend
 npm install
-npm start &
+PORT=59638 npm start &
 FRONTEND_PID=$!
 
 # Function to handle script termination
